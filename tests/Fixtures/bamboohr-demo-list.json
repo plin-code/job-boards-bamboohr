@@ -1,0 +1,27 @@
+{
+    "meta": {
+        "totalCount": 1
+    },
+    "result": [
+        {
+            "id": "1",
+            "jobOpeningName": "Accounting",
+            "departmentId": "17814",
+            "departmentLabel": "Accounting",
+            "employmentStatusLabel": "Full-time",
+            "employmentType": null,
+            "location": {
+                "city": "provo ",
+                "state": "Utah"
+            },
+            "atsLocation": {
+                "country": null,
+                "state": null,
+                "province": null,
+                "city": null
+            },
+            "isRemote": null,
+            "locationType": "0"
+        }
+    ]
+}
