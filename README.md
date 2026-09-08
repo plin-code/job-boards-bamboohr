@@ -145,17 +145,15 @@ PSR-18 has no notion of a timeout, so core's `HttpClient::withTimeout()` is only
 
 ## Depending on core
 
-This connector needs `plin-code/job-boards-core` `^0.3` for `Response::tryJson()`, which reads a body that may not be JSON without treating that as an error. The rest of the family is still on `^0.2`.
-
-Core is not on Packagist yet, so composer resolves it through a VCS repository declared in `composer.json`:
-
 ```json
-"repositories": [
-    { "type": "vcs", "url": "https://github.com/plin-code/job-boards-core.git" }
-]
+"require": {
+    "plin-code/job-boards-core": "^0.3"
+}
 ```
 
-Once core is published, drop the whole `repositories` block; the constraint already says the right thing.
+Core is on Packagist, so that constraint is all this package needs: there is no `repositories` block to carry. Do **not** commit a `path` repository pointing at a sibling checkout of core. It resolves against the layout of one machine, and the package then fails to install from a fresh clone anywhere else.
+
+The constraint starts at `^0.3` rather than `^0.2` like the rest of the family, because this connector reads `Response::tryJson()`, which core added in v0.3.0.
 
 ## Development
 

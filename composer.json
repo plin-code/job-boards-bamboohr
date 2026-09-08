@@ -38,12 +38,6 @@
         "pestphp/pest-plugin-laravel": "^3.0||^4.0",
         "phpstan/extension-installer": "^1.4"
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/plin-code/job-boards-core.git"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "PlinCode\\JobBoards\\BambooHR\\": "src/"
