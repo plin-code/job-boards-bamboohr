@@ -4,37 +4,28 @@
 
 # Job Boards BambooHR
 
-BambooHR connector for the [plin-code](https://github.com/plin-code) job boards family. Like Personio, BambooHR puts the company slug in the hostname rather than in the path, and the whole board comes back in a single answer with no pagination and no credentials.
+BambooHR connector for the [plin-code](https://github.com/plin-code) job boards family. It reads the public BambooHR careers board, which needs no credentials and returns a whole board in one request. Like Personio, the slug is a subdomain rather than a path segment:
 
 ```
 GET https://{slug}.bamboohr.com/careers/list
-{
-  "meta": { "totalCount": 1 },
-  "result": [
-    {
-      "id": "1",
-      "jobOpeningName": "Accounting",
-      "departmentLabel": "Accounting",
-      "location": { "city": "provo ", "state": "Utah" },
-      "atsLocation": { "country": null, "state": null, "province": null, "city": null },
-      "isRemote": null,
-      "locationType": "0"
-    }
-  ]
-}
+{ "meta": { "totalCount": 1 },
+  "result": [ { "id": "1", "jobOpeningName": "Accounting", "departmentLabel": "Accounting",
+                "location": { "city": "provo ", "state": "Utah" }, "isRemote": null } ] }
 ```
 
 It implements `PlinCode\JobBoards\Contracts\JobBoardClient` from [`plin-code/job-boards-core`](https://github.com/plin-code/job-boards-core), so it is interchangeable with every other connector in the family. Generated from [`plin-code/job-boards-skeleton`](https://github.com/plin-code/job-boards-skeleton).
-
-## Read this before you rely on it
-
-This is the endpoint the BambooHR careers widget calls, not a documented public API. BambooHR publishes no REST endpoint for job postings, so the field names above are observed from live boards rather than promised by a contract, and they can be renamed in a release without notice. The connector is written defensively because of it: every field is read through a guard, an unrecognised payload yields an empty list rather than an exception, and `rawPayload` always carries the untouched row so a consumer can recover anything the mapping drops.
 
 ## Installation
 
 ```bash
 composer require plin-code/job-boards-bamboohr
 ```
+
+## The endpoint is not a documented API, the most important thing here
+
+Every other connector in the family reads an API the provider publishes and documents. This one does not. BambooHR ships no REST endpoint for job postings, so this is the endpoint its own careers widget calls: reachable, stable enough in practice, and unannounced. The field names above are observed from live boards rather than promised by a contract, and they can be renamed in a release without warning.
+
+The connector is written for that. Every field is read through a guard, an unrecognised payload yields an empty list rather than an exception, and `rawPayload` always carries the untouched row so a consumer can recover anything the mapping drops. Treat a board that suddenly returns nothing as a signal to check the payload shape, not as a company that stopped hiring.
 
 ## Framework agnostic on purpose
 
@@ -98,18 +89,18 @@ The provider binds a PSR-18 client and a PSR-17 factory with `bindIf`, so an app
 | --- | --- |
 | `externalId` | `id`, cast to string and trimmed |
 | `title` | `jobOpeningName`, trimmed, falling back to `'Untitled Position'` |
-| `location` | see below |
+| `location` | `location`, then `atsLocation`, then `isRemote`, see below |
 | `url` | built from the slug and the id: the row carries no link |
 | `department` | `departmentLabel`, or `null` when empty |
 | `rawPayload` | the whole row, untouched |
 
 ## Locations arrive in two shapes
 
-`location` is the display pair the widget renders, `atsLocation` the structured record behind it. In practice one of the two is populated and the other is nulls, so the connector reads them in order:
+`location` is the display pair the widget renders, `atsLocation` the structured record behind it. In practice one of the two is populated and the other is nulls, so they are read in order:
 
 1. `location.city` and `location.state`, joined with a comma.
 2. `atsLocation.city`, `state`, `province` and `country`, joined the same way.
-3. The string `Remote` when the row carries no place at all but sets `isRemote` to `true`.
+3. The string `Remote`, when the row carries no place at all but sets `isRemote` to `true`.
 4. `null`.
 
 Values are trimmed on the way through. This is not cosmetic: the live board returns `"provo "` with a trailing space, and without the trim that padding reaches the database.
@@ -120,19 +111,13 @@ A slug with no careers site answers `302` to `https://www.bamboohr.com/`, and a 
 
 Every read is gated on the payload actually being this board's envelope. When `result` is not an array, the answer is treated as no board at all: an empty list from `fetchJobsForCompany()`, a `null` from `validateSlug()`, and a warning either way. A real tenant with nothing published is a different case and stays distinguishable, because it returns an empty `result` array and validates under its own slug.
 
-## Timeouts
-
-`validateSlug()` uses the shorter 15 second budget and `fetchJobsForCompany()` the full 30.
-
-PSR-18 has no notion of a timeout, so core's `HttpClient::withTimeout()` is only honoured by clients implementing `PlinCode\JobBoards\Http\SupportsTimeout`. Guzzle's PSR-18 client does not, so these numbers are a request the transport may ignore. If timeouts matter to you, build the Guzzle client with `['timeout' => 30]` and bind it yourself, or wrap it in a small `SupportsTimeout` adapter.
-
 ## Slugs land in the hostname
 
-Most connectors in the family put the slug in the path, where percent encoding is enough. BambooHR puts it in the host, where a `/` or an `@` is not escaped but silently retargets the request: `evil.com/x` would produce `https://evil.com/x.bamboohr.com/careers/list`. Slugs are therefore checked against a host label pattern (`[A-Za-z0-9]`, with `-` allowed in the middle) before any request goes out. A slug that fails logs a warning and yields an empty list or a `null`, like any other failure, and no request is made.
+Most connectors in the family put the slug in the path, where percent encoding is enough. BambooHR puts it in the host, where a `/` or an `@` is not escaped but silently retargets the request: `evil.com/x` would produce `https://evil.com/x.bamboohr.com/careers/list`. Slugs are therefore checked against a host label pattern (`[A-Za-z0-9]`, with `-` allowed in the middle) before any request goes out. A slug that fails logs a warning and yields an empty list or a `null`, and no request is made.
 
 ## No company description
 
-The careers page carries no company profile, only a generic "current openings" blurb that is byte for byte the same on every tenant. `fetchCompanyDescription()` therefore returns `null` without making a request. This is not a stub: there is nothing to fetch.
+The careers page carries no company profile, only a generic "current openings" blurb that is byte for byte the same on every tenant. `fetchCompanyDescription()` returns `null` without making a request. This is not a stub: there is nothing to fetch.
 
 `validateSlug()` is in the same position. BambooHR puts no company name in the payload, so a board that answers validates under the slug it was asked about.
 
@@ -151,6 +136,12 @@ The careers page carries no company profile, only a generic "current openings" b
 A board that exists and publishes nothing logs nothing: an empty result set is a real answer, not a problem.
 
 Every record carries `company_slug`. With no logger passed, a `NullLogger` is used and everything is silent. `validateSlug()` is silent by contract except for the slug check, and returns `null` for every failure including a dead connection.
+
+## Timeouts
+
+`validateSlug()` uses the shorter 15 second budget and `fetchJobsForCompany()` the full 30.
+
+PSR-18 has no notion of a timeout, so core's `HttpClient::withTimeout()` is only honoured by clients implementing `PlinCode\JobBoards\Http\SupportsTimeout`. Guzzle's PSR-18 client does not, so these numbers are a request the transport may ignore. If timeouts matter to you, build the Guzzle client with `['timeout' => 30]` and bind it yourself, or wrap it in a small `SupportsTimeout` adapter.
 
 ## Depending on core
 
