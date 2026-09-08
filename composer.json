@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "plin-code/job-boards-bamboohr",
-    "description": "Read the public BambooHR careers board: a framework agnostic client plus a thin Laravel service provider",
+    "description": "BambooHR job board connector for the plin-code job-boards family",
     "keywords": [
         "PlinCode",
         "plin-code",
@@ -9,7 +9,6 @@
         "job-board",
         "ats",
         "bamboohr",
-        "careers",
         "laravel"
     ],
     "homepage": "https://github.com/plin-code/job-boards-bamboohr",
