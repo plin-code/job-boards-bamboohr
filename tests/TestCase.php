@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace PlinCode\JobBoards\BambooHr\Tests;
+namespace PlinCode\JobBoards\BambooHR\Tests;
 
 use Illuminate\Foundation\Application;
 use Orchestra\Testbench\TestCase as Orchestra;
-use PlinCode\JobBoards\BambooHr\BambooHrServiceProvider;
+use PlinCode\JobBoards\BambooHR\BambooHRServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
@@ -16,6 +16,6 @@ abstract class TestCase extends Orchestra
      */
     protected function getPackageProviders($app): array
     {
-        return [BambooHrServiceProvider::class];
+        return [BambooHRServiceProvider::class];
     }
 }

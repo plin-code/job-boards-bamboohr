@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PlinCode\JobBoards\BambooHr;
+namespace PlinCode\JobBoards\BambooHR;
 
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\HttpFactory;
@@ -17,12 +17,12 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 /**
  * The only Laravel aware file in this package. It wires the PSR-18 client,
  * the PSR-17 request factory and core's HttpClient into the container, then
- * hands them to {@see BambooHrClient}.
+ * hands them to {@see BambooHRClient}.
  *
  * Everything it does by hand is a few lines, which is the point: outside
  * Laravel you construct the client yourself and skip this file entirely.
  */
-final class BambooHrServiceProvider extends PackageServiceProvider
+final class BambooHRServiceProvider extends PackageServiceProvider
 {
     public function configurePackage(Package $package): void
     {
@@ -38,7 +38,7 @@ final class BambooHrServiceProvider extends PackageServiceProvider
         $this->app->bindIf(ClientInterface::class, static fn (): ClientInterface => new GuzzleClient);
         $this->app->bindIf(RequestFactoryInterface::class, static fn (): RequestFactoryInterface => new HttpFactory);
 
-        $this->app->bind(BambooHrClient::class, function (Application $app): BambooHrClient {
+        $this->app->bind(BambooHRClient::class, function (Application $app): BambooHRClient {
             /** @var array{base_url?: mixed, job_url_template?: mixed, timeout?: mixed, lookup_timeout?: mixed, headers?: mixed} $config */
             $config = $app->make('config')->get('job-boards-bamboohr', []);
 
@@ -50,12 +50,12 @@ final class BambooHrServiceProvider extends PackageServiceProvider
                 $app->make(RequestFactoryInterface::class),
             );
 
-            return new BambooHrClient(
+            return new BambooHRClient(
                 $http->withHeaders($headers),
-                is_string($config['base_url'] ?? null) ? $config['base_url'] : BambooHrClient::API_BASE_URL,
-                is_string($config['job_url_template'] ?? null) ? $config['job_url_template'] : BambooHrClient::JOB_URL_TEMPLATE,
-                is_numeric($config['timeout'] ?? null) ? (float) $config['timeout'] : BambooHrClient::TIMEOUT_SECONDS,
-                is_numeric($config['lookup_timeout'] ?? null) ? (float) $config['lookup_timeout'] : BambooHrClient::LOOKUP_TIMEOUT_SECONDS,
+                is_string($config['base_url'] ?? null) ? $config['base_url'] : BambooHRClient::API_BASE_URL,
+                is_string($config['job_url_template'] ?? null) ? $config['job_url_template'] : BambooHRClient::JOB_URL_TEMPLATE,
+                is_numeric($config['timeout'] ?? null) ? (float) $config['timeout'] : BambooHRClient::TIMEOUT_SECONDS,
+                is_numeric($config['lookup_timeout'] ?? null) ? (float) $config['lookup_timeout'] : BambooHRClient::LOOKUP_TIMEOUT_SECONDS,
                 $app->make(LoggerInterface::class),
             );
         });

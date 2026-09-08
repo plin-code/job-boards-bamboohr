@@ -38,33 +38,33 @@ composer require plin-code/job-boards-bamboohr
 
 ## Framework agnostic on purpose
 
-`BambooHrClient` takes core's `HttpClient` and an optional PSR-3 logger. It imports nothing from Laravel, so a Symfony or plain PHP consumer builds it directly:
+`BambooHRClient` takes core's `HttpClient` and an optional PSR-3 logger. It imports nothing from Laravel, so a Symfony or plain PHP consumer builds it directly:
 
 ```php
 use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\HttpFactory;
 use PlinCode\JobBoards\Http\HttpClient;
-use PlinCode\JobBoards\BambooHr\BambooHrClient;
+use PlinCode\JobBoards\BambooHR\BambooHRClient;
 
 $http = new HttpClient(new Client, new HttpFactory);
 
-$client = new BambooHrClient($http);
+$client = new BambooHRClient($http);
 
 $jobs = $client->fetchJobsForCompany('acme');       // list<JobPostingDTO>
 $name = $client->validateSlug('acme');              // ?string, the slug itself
 $about = $client->fetchCompanyDescription('acme');  // always null, see below
 ```
 
-`BambooHrServiceProvider` is the only Laravel aware file in the package, and all it does is that same wiring out of the container.
+`BambooHRServiceProvider` is the only Laravel aware file in the package, and all it does is that same wiring out of the container.
 
 ## Laravel usage
 
 The provider is auto discovered.
 
 ```php
-use PlinCode\JobBoards\BambooHr\BambooHrClient;
+use PlinCode\JobBoards\BambooHR\BambooHRClient;
 
-$client = app(BambooHrClient::class);
+$client = app(BambooHRClient::class);
 
 foreach ($client->fetchJobsForCompany('acme') as $job) {
     JobPosting::updateOrCreate(
@@ -81,8 +81,8 @@ php artisan vendor:publish --tag=job-boards-bamboohr-config
 ```
 
 ```php
-'base_url'         => env('JOB_BOARDS_BAMBOOHR_BASE_URL', BambooHrClient::API_BASE_URL),
-'job_url_template' => env('JOB_BOARDS_BAMBOOHR_JOB_URL_TEMPLATE', BambooHrClient::JOB_URL_TEMPLATE),
+'base_url'         => env('JOB_BOARDS_BAMBOOHR_BASE_URL', BambooHRClient::API_BASE_URL),
+'job_url_template' => env('JOB_BOARDS_BAMBOOHR_JOB_URL_TEMPLATE', BambooHRClient::JOB_URL_TEMPLATE),
 'timeout'          => env('JOB_BOARDS_BAMBOOHR_TIMEOUT', 30),
 'lookup_timeout'   => env('JOB_BOARDS_BAMBOOHR_LOOKUP_TIMEOUT', 15),
 'headers'          => ['Accept' => 'application/json'],

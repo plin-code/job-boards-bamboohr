@@ -47,12 +47,12 @@
     ],
     "autoload": {
         "psr-4": {
-            "PlinCode\\JobBoards\\BambooHr\\": "src/"
+            "PlinCode\\JobBoards\\BambooHR\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "PlinCode\\JobBoards\\BambooHr\\Tests\\": "tests/"
+            "PlinCode\\JobBoards\\BambooHR\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -83,7 +83,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "PlinCode\\JobBoards\\BambooHr\\BambooHrServiceProvider"
+                "PlinCode\\JobBoards\\BambooHR\\BambooHRServiceProvider"
             ]
         }
     },

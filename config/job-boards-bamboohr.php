@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use PlinCode\JobBoards\BambooHr\BambooHrClient;
+use PlinCode\JobBoards\BambooHR\BambooHRClient;
 
 return [
 
@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'base_url' => env('JOB_BOARDS_BAMBOOHR_BASE_URL', BambooHrClient::API_BASE_URL),
+    'base_url' => env('JOB_BOARDS_BAMBOOHR_BASE_URL', BambooHRClient::API_BASE_URL),
 
     /*
     |--------------------------------------------------------------------------
@@ -29,7 +29,7 @@ return [
     |
     */
 
-    'job_url_template' => env('JOB_BOARDS_BAMBOOHR_JOB_URL_TEMPLATE', BambooHrClient::JOB_URL_TEMPLATE),
+    'job_url_template' => env('JOB_BOARDS_BAMBOOHR_JOB_URL_TEMPLATE', BambooHRClient::JOB_URL_TEMPLATE),
 
     /*
     |--------------------------------------------------------------------------

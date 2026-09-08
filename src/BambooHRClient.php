@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PlinCode\JobBoards\BambooHr;
+namespace PlinCode\JobBoards\BambooHR;
 
 use PlinCode\JobBoards\Contracts\JobBoardClient;
 use PlinCode\JobBoards\Data\JobPostingDTO;
@@ -38,9 +38,9 @@ use Throwable;
  *
  * Nothing here knows about Laravel. It is handed core's HttpClient and an
  * optional PSR-3 logger, both of which a Symfony or plain PHP consumer can
- * build by hand. {@see BambooHrServiceProvider} is the only Laravel aware file.
+ * build by hand. {@see BambooHRServiceProvider} is the only Laravel aware file.
  */
-final class BambooHrClient implements JobBoardClient
+final class BambooHRClient implements JobBoardClient
 {
     /**
      * The slug is a subdomain, so the base URL is a template rather than a

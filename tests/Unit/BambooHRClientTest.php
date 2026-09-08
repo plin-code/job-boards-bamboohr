@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use PlinCode\JobBoards\BambooHr\BambooHrClient;
+use PlinCode\JobBoards\BambooHR\BambooHRClient;
 use PlinCode\JobBoards\Data\JobPostingDTO;
 use PlinCode\JobBoards\Testing\FakePsrClient;
 use PlinCode\JobBoards\Testing\RecordingLogger;
 
-function bambooHrClient(FakePsrClient $fake, ?RecordingLogger $logger = null): BambooHrClient
+function bambooHRClient(FakePsrClient $fake, ?RecordingLogger $logger = null): BambooHRClient
 {
-    return new BambooHrClient($fake->asHttpClient(), logger: $logger);
+    return new BambooHRClient($fake->asHttpClient(), logger: $logger);
 }
 
 /**
@@ -17,7 +17,7 @@ function bambooHrClient(FakePsrClient $fake, ?RecordingLogger $logger = null): B
  * mapper has to cope with is in here: an id that is a string, a padded city,
  * an atsLocation of nothing but nulls, and a null isRemote.
  */
-function bambooHrFixture(): string
+function bambooHRFixture(): string
 {
     return (string) file_get_contents(__DIR__.'/../Fixtures/bamboohr-demo-list.json');
 }
@@ -25,7 +25,7 @@ function bambooHrFixture(): string
 /**
  * @param  array<array-key, mixed>  $rows
  */
-function bambooHrBoard(array $rows): FakePsrClient
+function bambooHRBoard(array $rows): FakePsrClient
 {
     return (new FakePsrClient)->respondWithJson([
         'meta' => ['totalCount' => count($rows)],
@@ -34,9 +34,9 @@ function bambooHrBoard(array $rows): FakePsrClient
 }
 
 it('maps the live board payload to DTOs', function (): void {
-    $fake = (new FakePsrClient)->respondWith(200, bambooHrFixture(), ['Content-Type' => 'application/json']);
+    $fake = (new FakePsrClient)->respondWith(200, bambooHRFixture(), ['Content-Type' => 'application/json']);
 
-    $jobs = bambooHrClient($fake)->fetchJobsForCompany('demo');
+    $jobs = bambooHRClient($fake)->fetchJobsForCompany('demo');
 
     expect($jobs)->toHaveCount(1)
         ->and($jobs[0])->toBeInstanceOf(JobPostingDTO::class)
@@ -51,20 +51,20 @@ it('maps the live board payload to DTOs', function (): void {
 });
 
 it('falls back to atsLocation when the display location is empty', function (): void {
-    $fake = bambooHrBoard([[
+    $fake = bambooHRBoard([[
         'id' => '7',
         'jobOpeningName' => 'Support Engineer',
         'location' => ['city' => null, 'state' => null],
         'atsLocation' => ['country' => 'Italy', 'state' => null, 'province' => 'MI', 'city' => 'Milan'],
     ]]);
 
-    $jobs = bambooHrClient($fake)->fetchJobsForCompany('acme');
+    $jobs = bambooHRClient($fake)->fetchJobsForCompany('acme');
 
     expect($jobs[0]->location)->toBe('Milan, MI, Italy');
 });
 
 it('reports a remote posting that carries no place at all', function (): void {
-    $fake = bambooHrBoard([[
+    $fake = bambooHRBoard([[
         'id' => '8',
         'jobOpeningName' => 'Designer',
         'location' => ['city' => '', 'state' => ''],
@@ -72,28 +72,28 @@ it('reports a remote posting that carries no place at all', function (): void {
         'isRemote' => true,
     ]]);
 
-    expect(bambooHrClient($fake)->fetchJobsForCompany('acme')[0]->location)->toBe('Remote');
+    expect(bambooHRClient($fake)->fetchJobsForCompany('acme')[0]->location)->toBe('Remote');
 });
 
 it('leaves the location null when the board gives nothing to show', function (): void {
-    $fake = bambooHrBoard([['id' => '9', 'jobOpeningName' => 'Intern']]);
+    $fake = bambooHRBoard([['id' => '9', 'jobOpeningName' => 'Intern']]);
 
-    $jobs = bambooHrClient($fake)->fetchJobsForCompany('acme');
+    $jobs = bambooHRClient($fake)->fetchJobsForCompany('acme');
 
     expect($jobs[0]->location)->toBeNull()
         ->and($jobs[0]->department)->toBeNull();
 });
 
 it('falls back to a placeholder title when the opening has no name', function (): void {
-    $fake = bambooHrBoard([['id' => '10', 'jobOpeningName' => '  ']]);
+    $fake = bambooHRBoard([['id' => '10', 'jobOpeningName' => '  ']]);
 
-    expect(bambooHrClient($fake)->fetchJobsForCompany('acme')[0]->title)->toBe('Untitled Position');
+    expect(bambooHRClient($fake)->fetchJobsForCompany('acme')[0]->title)->toBe('Untitled Position');
 });
 
 it('returns an empty list for a board that publishes nothing', function (): void {
     $logger = new RecordingLogger;
 
-    expect(bambooHrClient(bambooHrBoard([]), $logger)->fetchJobsForCompany('quiet'))->toBe([])
+    expect(bambooHRClient(bambooHRBoard([]), $logger)->fetchJobsForCompany('quiet'))->toBe([])
         // An empty board is a real answer, not a problem worth logging.
         ->and($logger->messages())->toBe([]);
 });
@@ -102,7 +102,7 @@ it('returns an empty list on a failed http response', function (): void {
     $fake = (new FakePsrClient)->respondWith(500, 'Server Error');
     $logger = new RecordingLogger;
 
-    expect(bambooHrClient($fake, $logger)->fetchJobsForCompany('broken'))->toBe([])
+    expect(bambooHRClient($fake, $logger)->fetchJobsForCompany('broken'))->toBe([])
         ->and($logger->messages())->toBe(['BambooHR careers request failed'])
         ->and($logger->levels())->toBe(['warning'])
         ->and($logger->records[0]['context'])->toBe(['company_slug' => 'broken', 'status' => 500]);
@@ -114,7 +114,7 @@ it('treats the marketing site a missing tenant redirects to as no board', functi
     $fake = (new FakePsrClient)->respondWith(200, '<!doctype html><title>BambooHR</title>', ['Content-Type' => 'text/html']);
     $logger = new RecordingLogger;
 
-    expect(bambooHrClient($fake, $logger)->fetchJobsForCompany('not-a-tenant'))->toBe([])
+    expect(bambooHRClient($fake, $logger)->fetchJobsForCompany('not-a-tenant'))->toBe([])
         ->and($logger->messages())->toBe(['BambooHR careers response is not a job board payload'])
         ->and($logger->levels())->toBe(['warning']);
 });
@@ -123,7 +123,7 @@ it('returns an empty list when the connection fails', function (): void {
     $fake = (new FakePsrClient)->throwNetworkError();
     $logger = new RecordingLogger;
 
-    expect(bambooHrClient($fake, $logger)->fetchJobsForCompany('unreachable'))->toBe([])
+    expect(bambooHRClient($fake, $logger)->fetchJobsForCompany('unreachable'))->toBe([])
         ->and($logger->messages())->toBe(['BambooHR connection error'])
         ->and($logger->levels())->toBe(['error']);
 });
@@ -132,44 +132,44 @@ it('refuses a slug that would retarget the request at another host', function ()
     $fake = new FakePsrClient;
     $logger = new RecordingLogger;
 
-    expect(bambooHrClient($fake, $logger)->fetchJobsForCompany('evil.com/x'))->toBe([])
+    expect(bambooHRClient($fake, $logger)->fetchJobsForCompany('evil.com/x'))->toBe([])
         ->and($fake->requests)->toBe([])
         ->and($logger->messages())->toBe(['BambooHR slug is not a usable host label']);
 });
 
 it('validates a slug that answers with the board envelope', function (): void {
-    $fake = bambooHrBoard([['id' => '1', 'jobOpeningName' => 'Accounting']]);
+    $fake = bambooHRBoard([['id' => '1', 'jobOpeningName' => 'Accounting']]);
 
-    expect(bambooHrClient($fake)->validateSlug('demo'))->toBe('demo')
+    expect(bambooHRClient($fake)->validateSlug('demo'))->toBe('demo')
         ->and($fake->lastUri())->toBe('https://demo.bamboohr.com/careers/list');
 });
 
 it('validates a real tenant that has nothing published', function (): void {
-    expect(bambooHrClient(bambooHrBoard([]))->validateSlug('quiet'))->toBe('quiet');
+    expect(bambooHRClient(bambooHRBoard([]))->validateSlug('quiet'))->toBe('quiet');
 });
 
 it('rejects a slug whose answer is not a board', function (): void {
     $fake = (new FakePsrClient)->respondWith(200, '<!doctype html>', ['Content-Type' => 'text/html']);
 
-    expect(bambooHrClient($fake)->validateSlug('not-a-tenant'))->toBeNull();
+    expect(bambooHRClient($fake)->validateSlug('not-a-tenant'))->toBeNull();
 });
 
 it('rejects a slug when the lookup fails outright', function (): void {
-    expect(bambooHrClient((new FakePsrClient)->throwNetworkError())->validateSlug('unreachable'))->toBeNull()
-        ->and(bambooHrClient((new FakePsrClient)->respondWith(503))->validateSlug('down'))->toBeNull();
+    expect(bambooHRClient((new FakePsrClient)->throwNetworkError())->validateSlug('unreachable'))->toBeNull()
+        ->and(bambooHRClient((new FakePsrClient)->respondWith(503))->validateSlug('down'))->toBeNull();
 });
 
 it('has no company description to offer', function (): void {
-    expect(bambooHrClient(new FakePsrClient)->fetchCompanyDescription('demo'))->toBeNull();
+    expect(bambooHRClient(new FakePsrClient)->fetchCompanyDescription('demo'))->toBeNull();
 });
 
 it('asks for the timeout each call says it wants', function (): void {
-    $fake = bambooHrBoard([]);
-    bambooHrClient($fake)->fetchJobsForCompany('demo');
+    $fake = bambooHRBoard([]);
+    bambooHRClient($fake)->fetchJobsForCompany('demo');
 
-    $lookup = bambooHrBoard([]);
-    bambooHrClient($lookup)->validateSlug('demo');
+    $lookup = bambooHRBoard([]);
+    bambooHRClient($lookup)->validateSlug('demo');
 
-    expect($fake->appliedTimeouts)->toBe([BambooHrClient::TIMEOUT_SECONDS])
-        ->and($lookup->appliedTimeouts)->toBe([BambooHrClient::LOOKUP_TIMEOUT_SECONDS]);
+    expect($fake->appliedTimeouts)->toBe([BambooHRClient::TIMEOUT_SECONDS])
+        ->and($lookup->appliedTimeouts)->toBe([BambooHRClient::LOOKUP_TIMEOUT_SECONDS]);
 });
